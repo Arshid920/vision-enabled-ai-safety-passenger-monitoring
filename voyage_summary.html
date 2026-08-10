@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Voyage Summary — Boat Safety{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-lg-6 fade-up">
+
+        <div class="glass p-5 text-center">
+            <div class="mb-4" style="font-size:4rem;">🏁</div>
+            <h2 class="fw-bold mb-2">Voyage Completed</h2>
+            <p class="text-muted mb-5">Voyage #{{ trip.id }} has been successfully recorded.</p>
+
+            <div class="row g-3 mb-5">
+                <div class="col-6">
+                    <div class="p-3 rounded" style="background:rgba(255,255,255,0.05);">
+                        <small class="text-muted d-block mb-1">DURATION</small>
+                        <h4 class="fw-bold text-white mb-0">{{ duration }}</h4>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded" style="background:rgba(255,255,255,0.05);">
+                        <small class="text-muted d-block mb-1">MAX PASSENGERS</small>
+                        <h4 class="fw-bold text-white mb-0">{{ trip.max_passenger_count }}</h4>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded" style="background:rgba(255,255,255,0.05);">
+                        <small class="text-muted d-block mb-1">TOTAL ALERTS</small>
+                        <h4 class="fw-bold text-warning mb-0">{{ trip.alert_count }}</h4>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded" style="background:rgba(255,255,255,0.05);">
+                        <small class="text-muted d-block mb-1">FINAL STATUS</small>
+                        <h4 class="fw-bold text-success mb-0">{{ trip.safety_status }}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <a href="/dashboard" class="btn btn-primary w-100 py-3 fw-bold">
+                Start New Voyage
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

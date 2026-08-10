@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Home — BoatSafetyAI{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Full page floating background */
+    body {
+        background: transparent !important;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        top: -5%;
+        left: -5%;
+        width: 110%;
+        height: 110%;
+        background: url('/static/floating_boat_bg.jpg') no-repeat center center;
+        background-size: cover;
+        z-index: -2;
+        animation: boat-float 15s ease-in-out infinite alternate;
+    }
+
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        /* subtle dark overlay to ensure text is readable */
+        background: rgba(0, 10, 30, 0.25);
+        z-index: -1;
+    }
+
+    /* Floating animation simulating drone movement / gentle drifting */
+    @keyframes boat-float {
+        0% {
+            transform: translateY(0) scale(1);
+        }
+
+        50% {
+            transform: translateY(-3%) translateX(1%) scale(1.03);
+        }
+
+        100% {
+            transform: translateY(-1%) translateX(-2%) scale(1.05);
+        }
+    }
+
+    /* Updated Text Styling */
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #ffffff;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 30px rgba(180, 230, 255, 0.6);
+        letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #f8fafc;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* New Glass styling specifically for these cards */
+    .custom-glass {
+        background: rgba(4, 15, 30, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1.25rem;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+        padding: 2.5rem 2rem;
+        transition: transform 0.3s;
+    }
+
+    .custom-glass h4 {
+        font-size: 1.6rem;
+    }
+
+    .custom-glass p {
+        color: #cbd5e1 !important;
+        min-height: 48px;
+    }
+
+    .custom-glass:hover {
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Custom Buttons for these cards */
+    .btn-cyan-solid {
+        background: linear-gradient(135deg, #00e0ff, #3b82f6) !important;
+        border: none !important;
+        color: #000 !important;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(0, 224, 255, 0.4);
+    }
+
+    .btn-cyan-solid:hover {
+        color: #000 !important;
+        opacity: 0.9;
+    }
+
+    .btn-cyan-outline {
+        border: 1.5px solid #00e0ff !important;
+        color: #00e0ff !important;
+        background: transparent !important;
+    }
+
+    .btn-cyan-outline:hover {
+        background: rgba(0, 224, 255, 0.1) !important;
+        color: #ffffff !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="text-center py-5 fade-up mt-4">
+    <h1 class="hero-title mb-5">
+        Vision-Enabled Boat Safety And Passenger Monitoring System
+    </h1>
+</div>
+
+<!-- Role cards -->
+<div class="row justify-content-center g-4 pb-5 pt-3">
+    <!-- Admin Card -->
+    <div class="col-md-5 fade-up fade-up-d1">
+        <div class="custom-glass h-100 d-flex flex-column">
+            <div class="text-center mb-3" style="font-size:2.5rem;">👨‍✈️</div>
+            <h4 class="fw-bold text-center mb-2">Administrator</h4>
+            <p class="text-center font-size-9 mb-4">
+                Monitor the full fleet, manage registered drivers, and view system-wide safety analytics.
+            </p>
+            <div class="mt-auto">
+                <a href="/auth/login?role=admin" class="btn btn-cyan-outline w-100 py-2">Admin Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Driver Card -->
+    <div class="col-md-5 fade-up fade-up-d2">
+        <div class="custom-glass h-100 d-flex flex-column">
+            <div class="text-center mb-3" style="font-size:2.5rem;">🚤</div>
+            <h4 class="fw-bold text-center mb-2">Boat Driver</h4>
+            <p class="text-center font-size-9 mb-4">
+                Access live camera feeds, verify passenger counts, and receive critical real-time alerts.
+            </p>
+            <div class="d-grid gap-3 mt-auto">
+                <a href="/auth/login?role=driver" class="btn btn-cyan-solid py-2">Driver Login</a>
+                <a href="/auth/register" class="btn btn-cyan-outline py-2">New Registration</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
