@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+python-multipart
+jinja2
+sqlalchemy
+passlib[pbkdf2-sha256]
+ultralytics
+cvzone
+opencv-python
+numpy
+streamlit
+pandas
+joblib
+scikit-learn
+pytest
+httpx
+anyio

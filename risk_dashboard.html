@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Component - Option C</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        /* Titles outside the card */
+        .page-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1e3a8a; /* Dark Blue */
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .page-footer {
+            font-size: 18px;
+            font-weight: 600;
+            font-style: italic;
+            color: #1e3a8a; /* Dark Blue */
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        /* Metallic Frame / Wrapper */
+        .card-frame {
+            background: linear-gradient(135deg, #a1a5ab 0%, #e2e8f0 30%, #64748b 100%);
+            padding: 4px;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255,255,255,0.8);
+        }
+
+        /* Main Dark Rectangular Card */
+        .dashboard-card {
+            background: #0f172a; /* Slate Dark background */
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 8px;
+            padding: 32px;
+            display: flex;
+            align-items: stretch;
+            width: 850px;
+            max-width: 95vw;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.8);
+            border: 1px solid #000;
+        }
+
+        .left-section, .right-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Left Section: Risk Gauge & Status */
+        .left-section {
+            width: 280px;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-right: 16px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9ca3af; /* Muted gray */
+            letter-spacing: 1.2px;
+            font-weight: 600;
+        }
+        
+        .crowd-label-top {
+            margin-bottom: 12px;
+        }
+
+        /* Gauge styles */
+        .gauge-container {
+            position: relative;
+            width: 150px;
+            height: 90px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        /* SVG Drop Shadow filter definition */
+        .gauge-svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .gauge-arc-green { stroke: #22c55e; fill: none; stroke-width: 16; stroke-linecap: round; filter: drop-shadow(0px 0px 6px rgba(34,197,94,0.4)); }
+        .gauge-arc-yellow { stroke: #eab308; fill: none; stroke-width: 16; stroke-linecap: round; filter: drop-shadow(0px 0px 6px rgba(234,179,8,0.4)); }
+        .gauge-arc-red { stroke: #ef4444; fill: none; stroke-width: 16; stroke-linecap: round; filter: drop-shadow(0px 0px 6px rgba(239,68,68,0.4)); }
+        
+        .gauge-needle-path { fill: #f8fafc; }
+        .gauge-needle-shadow { filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.6)); }
+        .gauge-pivot { fill: #cbd5e1; }
+
+        .gauge-status {
+            font-size: 26px;
+            font-weight: 800;
+            color: #22c55e; /* Green */
+            margin-top: -10px;
+            margin-bottom: 2px;
+            text-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .compliance-label {
+            margin-top: 24px;
+            margin-bottom: 8px;
+        }
+
+        .compliance-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #06b6d4; /* Bright Cyan */
+            text-shadow: 0 0 15px rgba(6, 182, 212, 0.6);
+            line-height: 1;
+        }
+
+        /* Divider */
+        .card-divider {
+            width: 2px;
+            background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 30%, rgba(255,255,255,0.4) 70%, rgba(255,255,255,0) 100%);
+            margin: 0 32px;
+            box-shadow: 1px 0 2px rgba(0,0,0,0.5);
+        }
+
+        /* Right Section: Trend Line Chart */
+        .right-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: stretch;
+            background: #000;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Background color bands */
+        .chart-bands {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        .band-red { flex: 1; background: rgba(120, 20, 30, 0.85); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .band-yellow { flex: 1; background: rgba(130, 90, 10, 0.85); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .band-green { flex: 1; background: rgba(20, 90, 40, 0.85); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .band-blue { flex: 1; background: rgba(15, 30, 50, 0.85); }
+
+        .chart-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+        
+        .chart-line {
+            fill: none;
+            stroke: #ffffff;
+            stroke-width: 2.5;
+            filter: drop-shadow(0px 0px 8px rgba(255,255,255,0.9));
+        }
+
+        .chart-dot {
+            fill: #1e293b;
+            stroke: #ffffff;
+            stroke-width: 2;
+            filter: drop-shadow(0px 0px 4px rgba(255,255,255,0.8));
+        }
+
+        /* Responsive styling */
+        @media (max-width: 768px) {
+            .dashboard-card {
+                flex-direction: column;
+                align-items: center;
+                padding: 24px 16px;
+            }
+            .card-divider {
+                width: 100%;
+                height: 2px;
+                background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 30%, rgba(255,255,255,0.4) 70%, rgba(255,255,255,0) 100%);
+                margin: 24px 0;
+            }
+            .left-section, .right-section {
+                width: 100%;
+                padding-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-title">Option C: Risk Gauge & Trend Graph</div>
+
+    <div class="card-frame">
+        <div class="dashboard-card">
+            
+            <!-- Left Section: Risk Gauge & Status -->
+            <div class="left-section">
+                <!-- <div class="section-label crowd-label-top">CROWD LEVEL</div> -->
+                
+                <div class="gauge-container">
+                    <svg class="gauge-svg" viewBox="0 0 200 120">
+                        <defs>
+                            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity="0.6"/>
+                            </filter>
+                        </defs>
+                        
+                        <!-- CROWD LEVEL Label on Top -->
+                        <text x="100" y="20" font-family="'Inter', sans-serif" font-size="12" font-weight="600" fill="#9ca3af" text-anchor="middle" letter-spacing="1.2">CROWD LEVEL</text>
+                        
+                        <!-- Gauge Arcs - Adjusted coordinates for smooth alignment -->
+                        <path class="gauge-arc-green" d="M 30 110 A 75 75 0 0 1 58 52" />
+                        <path class="gauge-arc-yellow" d="M 68 46 A 75 75 0 0 1 132 46" />
+                        <path class="gauge-arc-red" d="M 142 52 A 75 75 0 0 1 170 110" />
+                        
+                        <!-- Needle Pivot/Rotation Point -->
+                        <g transform="rotate(-65, 100, 105)" class="gauge-needle-shadow">
+                            <!-- Needle Body -->
+                            <path class="gauge-needle-path" d="M 97 105 L 100 25 L 103 105 Z" />
+                            <!-- Needle Base metallic circle -->
+                            <circle class="gauge-pivot" cx="100" cy="105" r="10" />
+                            <circle cx="100" cy="105" r="4" fill="#333" />
+                        </g>
+                    </svg>
+                </div>
+
+                <div class="gauge-status">LOW</div>
+
+                <div class="section-label compliance-label">LIFE-JACKET COMPLIANCE</div>
+                <div class="compliance-value">100%</div>
+            </div>
+
+            <!-- Vertical Divider -->
+            <div class="card-divider"></div>
+
+            <!-- Right Section: Trend Line Chart -->
+            <div class="right-section">
+                <div class="chart-header">
+                    <div class="section-label" style="margin-bottom: 0;">RISK TREND &nbsp;<span style="text-transform:none; font-size:10px;">(LAST 30 SEC)</span></div>
+                </div>
+                
+                <div class="chart-container">
+                    <!-- 4 Horizontal Risk Bands -->
+                    <div class="chart-bands">
+                        <div class="band-red"></div>
+                        <div class="band-yellow"></div>
+                        <div class="band-green"></div>
+                        <div class="band-blue"></div>
+                    </div>
+                    
+                    <!-- SVG Line Plot -->
+                    <svg class="chart-svg" viewBox="0 0 500 160" preserveAspectRatio="none" id="trendChart">
+                        <polyline class="chart-line" points="
+                            15,130 
+                            40,110 
+                            65,100 
+                            90,120 
+                            115,105 
+                            140,85 
+                            165,115 
+                            190,125 
+                            215,110 
+                            240,65 
+                            265,55 
+                            290,80 
+                            315,95 
+                            340,110 
+                            365,120 
+                            390,100 
+                            415,95 
+                            440,105 
+                            465,65 
+                            485,30
+                        " />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-footer">Risk Gauge + Trend Line Chart</div>
+
+    <script>
+        // Javascript to render the glowing dots on each vertex of the polyline
+        const chart = document.getElementById('trendChart');
+        const polyline = chart.querySelector('.chart-line');
+        const pointsStr = polyline.getAttribute('points').trim();
+        const points = pointsStr.split(/[\s,]+/);
+        
+        // The points array might have alternating x and y if split by space/comma 
+        // e.g. "15", "130", "40", "110" ...
+        for (let i = 0; i < points.length; i += 2) {
+            if (!points[i] || !points[i+1]) continue;
+            
+            const x = points[i];
+            const y = points[i+1];
+            
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", x);
+            circle.setAttribute("cy", y);
+            circle.setAttribute("r", "3.5");
+            circle.setAttribute("class", "chart-dot");
+            
+            chart.appendChild(circle);
+        }
+    </script>
+</body>
+</html>
