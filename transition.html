@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marine Safety System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0b1e35;
+        }
+
+        /* ── BACKGROUND ── */
+        .bg {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 120% 80% at 50% 120%, #1a4a7a 0%, #0b1e35 55%, #061220 100%);
+            z-index: 0;
+        }
+
+        /* ── WAVE CANVAS ── */
+        #waveCanvas {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ── PARTICLES ── */
+        #particles {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* ── CENTER STAGE ── */
+        .stage {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── RINGS ── */
+        .rings {
+            position: relative;
+            width: 240px;
+            height: 240px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1.5px solid rgba(0, 180, 255, 0.25);
+            animation: ringPulse 3s ease-out infinite;
+        }
+
+        .ring:nth-child(1) {
+            width: 240px;
+            height: 240px;
+            animation-delay: 0s;
+        }
+
+        .ring:nth-child(2) {
+            width: 190px;
+            height: 190px;
+            animation-delay: 0.4s;
+            border-color: rgba(0, 180, 255, .35);
+        }
+
+        .ring:nth-child(3) {
+            width: 140px;
+            height: 140px;
+            animation-delay: 0.8s;
+            border-color: rgba(0, 180, 255, .5);
+        }
+
+        @keyframes ringPulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            30% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.12);
+                opacity: 0;
+            }
+        }
+
+        /* ── SVG EMBLEM ── */
+        .emblem {
+            position: relative;
+            z-index: 2;
+            width: 110px;
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emblem-bg {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 150, 200, 0.18) 0%, rgba(0, 80, 140, 0.08) 100%);
+            border: 1.5px solid rgba(0, 180, 255, 0.4);
+            box-shadow: 0 0 30px rgba(0, 180, 255, 0.15), inset 0 0 20px rgba(0, 180, 255, 0.06);
+        }
+
+        .emblem svg {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* SVG draw-on animation */
+        .draw-path {
+            stroke-dasharray: 420;
+            stroke-dashoffset: 420;
+            animation: drawIn 1.1s ease-out 0.5s forwards;
+        }
+
+        .draw-path-2 {
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: drawIn 0.9s ease-out 1.0s forwards;
+        }
+
+        .draw-path-3 {
+            stroke-dasharray: 80;
+            stroke-dashoffset: 80;
+            animation: drawIn 0.6s ease-out 1.4s forwards;
+        }
+
+        @keyframes drawIn {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Emblem glow on complete */
+        .emblem-glow {
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            background: transparent;
+            animation: glowUp 0.6s ease 2.0s forwards;
+        }
+
+        @keyframes glowUp {
+            to {
+                box-shadow: 0 0 40px rgba(0, 220, 180, 0.45), 0 0 80px rgba(0, 220, 180, 0.15);
+            }
+        }
+
+        /* ── TEXT BLOCK ── */
+        .textbox {
+            text-align: center;
+        }
+
+        .sys-name {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.22em;
+            color: rgba(100, 200, 255, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            opacity: 0;
+            animation: fadeSlideUp 0.6s ease 1.2s forwards;
+        }
+
+        .main-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.9rem;
+            font-weight: 900;
+            letter-spacing: -0.01em;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(0, 200, 255, 0.5);
+            margin-bottom: 8px;
+            opacity: 0;
+            animation: fadeSlideUp 0.7s ease 1.5s forwards;
+        }
+
+        .sub-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.14em;
+            color: rgba(100, 220, 255, 0.55);
+            margin-bottom: 28px;
+            opacity: 0;
+            animation: fadeSlideUp 0.6s ease 1.8s forwards;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        /* ── PROGRESS BAR ── */
+        .progress-wrap {
+            width: 260px;
+            margin: 0 auto 20px;
+            opacity: 0;
+            animation: fadeIn 0.4s ease 2.0s forwards;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.6rem;
+            color: rgba(100, 200, 255, 0.45);
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00aaff, #00e5b0);
+            border-radius: 99px;
+            box-shadow: 0 0 8px rgba(0, 200, 200, 0.6);
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── STATUS PILL ── */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(0, 220, 160, 0.1);
+            border: 1px solid rgba(0, 220, 160, 0.3);
+            border-radius: 99px;
+            padding: 5px 14px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            color: rgba(0, 220, 160, 0.9);
+            opacity: 0;
+            animation: fadeIn 0.5s ease 2.7s forwards;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #00dc9f;
+            box-shadow: 0 0 8px rgba(0, 220, 160, 0.8);
+            animation: blink 1s ease-in-out 2.7s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ── HUD CORNERS ── */
+        .hud-corner {
+            position: fixed;
+            z-index: 11;
+            pointer-events: none;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.58rem;
+            letter-spacing: 0.1em;
+            color: rgba(0, 180, 255, 0.4);
+            line-height: 1.8;
+            opacity: 0;
+            animation: fadeIn 0.5s ease 2.1s forwards;
+        }
+
+        .hud-corner.tl {
+            top: 20px;
+            left: 24px;
+        }
+
+        .hud-corner.tr {
+            top: 20px;
+            right: 24px;
+            text-align: right;
+        }
+
+        .hud-corner.bl {
+            bottom: 20px;
+            left: 24px;
+        }
+
+        .hud-corner.br {
+            bottom: 20px;
+            right: 24px;
+            text-align: right;
+        }
+
+        .hc-bracket {
+            width: 16px;
+            height: 16px;
+            display: block;
+            margin-bottom: 5px;
+            border-color: rgba(0, 180, 255, .3);
+            border-style: solid;
+        }
+
+        .hc-bracket.tl {
+            border-width: 1.5px 0 0 1.5px;
+        }
+
+        .hc-bracket.tr {
+            border-width: 1.5px 1.5px 0 0;
+            margin-left: auto;
+        }
+
+        .hc-bracket.bl {
+            border-width: 0 0 1.5px 1.5px;
+            margin-top: 5px;
+            margin-bottom: 0;
+        }
+
+        .hc-bracket.br {
+            border-width: 0 1.5px 1.5px 0;
+            margin-top: 5px;
+            margin-bottom: 0;
+            margin-left: auto;
+        }
+
+        /* ── SCANLINE ── */
+        .scanline {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 1.5px;
+            z-index: 20;
+            pointer-events: none;
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, .5) 50%, transparent 100%);
+            opacity: 0;
+            animation: scanReveal 0.3s ease 1.8s forwards, scanMove 2.6s linear 2.1s infinite;
+        }
+
+        @keyframes scanReveal {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scanMove {
+            0% {
+                top: 0;
+            }
+
+            100% {
+                top: 100%;
+            }
+        }
+
+        /* ── VEIL ── */
+        #veil {
+            position: fixed;
+            inset: 0;
+            background: #0b1e35;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 99;
+            transition: opacity 0.6s ease;
+        }
+
+        #veil.fade {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg"></div>
+    <canvas id="waveCanvas"></canvas>
+    <canvas id="particles"></canvas>
+
+    <div class="scanline"></div>
+
+    <!-- HUD Corners -->
+    <div class="hud-corner tl">
+        <span class="hc-bracket tl"></span>
+        VESSEL ID: BSA-042<br>
+        MODE: PRE-VOYAGE<br>
+        AI CORE: ONLINE
+    </div>
+    <div class="hud-corner tr">
+        <span class="hc-bracket tr"></span>
+        GPS: LOCKED<br>
+        RADAR: 360°<br>
+        STATUS: READY
+    </div>
+    <div class="hud-corner bl">
+        <span class="hc-bracket bl"></span>
+        ENV SCAN: COMPLETE
+    </div>
+    <div class="hud-corner br">
+        <span class="hc-bracket br"></span>
+        PASSENGERS: MONITOR ON
+    </div>
+
+    <!-- Main Stage -->
+    <div class="stage">
+
+        <!-- Animated rings + emblem -->
+        <div class="rings">
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="ring"></div>
+
+            <div class="emblem">
+                <div class="emblem-bg"></div>
+                <div class="emblem-glow"></div>
+                <!-- SVG boat + shield drawn via stroke-dashoffset -->
+                <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+                    <!-- Shield outline -->
+                    <path class="draw-path" d="M36 6 L62 14 L62 36 Q62 56 36 68 Q10 56 10 36 L10 14 Z" stroke="#00c8f0"
+                        stroke-width="1.5" fill="none" stroke-linejoin="round" />
+                    <!-- Boat hull -->
+                    <path class="draw-path-2" d="M20 42 Q22 50 36 52 Q50 50 52 42 Z" stroke="#00e5c0" stroke-width="1.5"
+                        fill="none" />
+                    <!-- Boat cabin + mast -->
+                    <path class="draw-path-3" d="M29 42 L29 34 L43 34 L43 42 M36 34 L36 22" stroke="#00e5c0"
+                        stroke-width="1.5" fill="none" stroke-linecap="round" />
+                    <!-- Center dot -->
+                    <circle cx="36" cy="36" r="2.5" fill="#00e5c0"
+                        style="opacity:0; animation: fadeIn 0.4s ease 2.0s forwards" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Text -->
+        <div class="textbox">
+            <div class="sys-name">⬡ &nbsp; Vision-Enabled Boat Safety System &nbsp; ⬡</div>
+            <div class="main-title">Marine Safety Shield Active</div>
+            <div class="sub-title">AI VOYAGE PROTECTION &nbsp;|&nbsp; ONLINE</div>
+
+            <!-- Progress -->
+            <div class="progress-wrap">
+                <div class="progress-label">
+                    <span>SYSTEM BOOT</span>
+                    <span id="pct">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="pFill"></div>
+                </div>
+            </div>
+
+            <!-- Status pill -->
+            <div class="status-pill">
+                <span class="status-dot"></span>
+                SAFETY SYSTEM READY — PROCEED TO CLEARANCE
+            </div>
+        </div>
+
+    </div>
+
+    <div id="veil"></div>
+
+    <script>
+        // ── WAVE CANVAS ──────────────────────────────────
+        const wc = document.getElementById('waveCanvas');
+        const wct = wc.getContext('2d');
+        let wW, wH;
+
+        function resizeWave() {
+            wW = wc.width = window.innerWidth;
+            wH = wc.height = Math.min(window.innerHeight * 0.38, 260);
+        }
+        resizeWave();
+        window.addEventListener('resize', resizeWave);
+
+        function drawWaves(t) {
+            wct.clearRect(0, 0, wW, wH);
+            const layers = [
+                { amp: 22, freq: 0.012, speed: 0.6, color: 'rgba(10,80,150,0.45)', yOff: 0.60 },
+                { amp: 16, freq: 0.018, speed: 0.9, color: 'rgba(10,100,180,0.35)', yOff: 0.70 },
+                { amp: 12, freq: 0.025, speed: 1.3, color: 'rgba(20,130,200,0.25)', yOff: 0.80 },
+                { amp: 8, freq: 0.035, speed: 1.8, color: 'rgba(30,160,220,0.18)', yOff: 0.88 },
+            ];
+            layers.forEach(({ amp, freq, speed, color, yOff }) => {
+                const base = wH * yOff;
+                wct.beginPath();
+                wct.moveTo(0, base);
+                for (let x = 0; x <= wW; x += 2) {
+                    const y = base + Math.sin(x * freq + t * speed) * amp
+                        + Math.sin(x * freq * 1.6 + t * speed * 0.7) * (amp * 0.4);
+                    wct.lineTo(x, y);
+                }
+                wct.lineTo(wW, wH); wct.lineTo(0, wH); wct.closePath();
+                wct.fillStyle = color; wct.fill();
+            });
+        }
+
+        // ── PARTICLE CANVAS ───────────────────────────────
+        const pc = document.getElementById('particles');
+        const pct = pc.getContext('2d');
+        pc.style.position = 'fixed'; pc.style.inset = '0'; pc.style.pointerEvents = 'none';
+
+        function resizePart() { pc.width = window.innerWidth; pc.height = window.innerHeight; }
+        resizePart(); window.addEventListener('resize', resizePart);
+
+        const DOTS = Array.from({ length: 60 }, () => ({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            r: Math.random() * 1.2 + 0.3,
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: -(Math.random() * 0.4 + 0.15),
+            op: Math.random() * 0.5 + 0.1
+        }));
+
+        function drawParticles() {
+            pct.clearRect(0, 0, pc.width, pc.height);
+            pct.shadowBlur = 6; pct.shadowColor = 'rgba(0,160,255,0.4)';
+            DOTS.forEach(d => {
+                d.x += d.vx; d.y += d.vy;
+                if (d.y < -5) { d.y = pc.height + 5; d.x = Math.random() * pc.width; }
+                pct.beginPath();
+                pct.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                pct.fillStyle = `rgba(80,200,255,${d.op})`;
+                pct.fill();
+            });
+            pct.shadowBlur = 0;
+        }
+
+        // ── PROGRESS BAR ─────────────────────────────────
+        const pFill = document.getElementById('pFill');
+        const pPct = document.getElementById('pct');
+        let filled = false;
+
+        function startProgress() {
+            let val = 0;
+            const id = setInterval(() => {
+                val = Math.min(100, val + Math.random() * 6 + 2);
+                pFill.style.width = val + '%';
+                pPct.textContent = Math.round(val) + '%';
+                if (val >= 100) clearInterval(id);
+            }, 45);
+        }
+        setTimeout(startProgress, 2050);
+
+        // ── MAIN ANIMATION LOOP ───────────────────────────
+        let startTime = null;
+        let navDone = false;
+
+        function loop(ts) {
+            if (!startTime) startTime = ts;
+            const elapsed = (ts - startTime) / 1000;
+            const t = elapsed;
+
+            drawWaves(t);
+            drawParticles();
+
+            if (elapsed >= 3.7 && !navDone) {
+                navDone = true;
+                document.getElementById('veil').classList.add('fade');
+                setTimeout(() => { window.location.href = '/pre_voyage'; }, 650);
+            }
+
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+
+</html>

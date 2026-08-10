@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+{% block title %}Driver Dashboard — BoatSafetyAI{% endblock %}
+
+{% block content %}
+<style>
+    /* Custom local styles */
+    .glass-panel {
+        background: rgba(10, 20, 35, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+    }
+
+    .hud-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-muted);
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.85rem;
+        letter-spacing: 0.1em;
+        margin-bottom: 1.5rem;
+    }
+
+    .header-stats {
+        display: flex;
+        gap: 3rem;
+    }
+
+    .header-stat-value {
+        color: #fff;
+        font-weight: bold;
+        font-size: 1.15rem;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .system-active {
+        background: rgba(34, 197, 94, 0.15);
+        color: #86efac;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        padding: 6px 16px;
+        border-radius: 99px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .system-active .dot {
+        width: 6px;
+        height: 6px;
+        background: #86efac;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    .video-container {
+        position: relative;
+        border: 1px solid rgba(0, 180, 255, 0.2);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #000;
+    }
+
+    .video-bracket {
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        border-color: #3b82f6;
+        border-style: solid;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .vb-tl {
+        top: 10px;
+        left: 10px;
+        border-width: 2px 0 0 2px;
+    }
+
+    .vb-tr {
+        top: 10px;
+        right: 10px;
+        border-width: 2px 2px 0 0;
+    }
+
+    .vb-bl {
+        bottom: 10px;
+        left: 10px;
+        border-width: 0 0 2px 2px;
+    }
+
+    .vb-br {
+        bottom: 10px;
+        right: 10px;
+        border-width: 0 2px 2px 0;
+    }
+
+    .rec-badge {
+        position: absolute;
+        top: 15px;
+        right: 40px;
+        background: rgba(0, 0, 0, 0.6);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+        padding: 2px 8px;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.7rem;
+        border-radius: 4px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .passengers-big {
+        font-size: 4rem;
+        font-weight: 700;
+        color: #3b82f6;
+        text-align: center;
+        line-height: 1;
+        margin: 1.5rem 0;
+    }
+
+    .progress-bar-custom {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 5px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: #3b82f6;
+        transition: width 0.3s ease;
+    }
+
+    .protocol-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .badge-custom {
+        font-size: 0.65rem;
+        letter-spacing: 0.1em;
+        padding: 4px 10px;
+        border-radius: 99px;
+        font-family: 'Share Tech Mono', monospace;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    .badge-normal {
+        color: #22c55e;
+        border: 1px solid #22c55e;
+    }
+
+    .badge-warning {
+        color: #f59e0b;
+        border: 1px solid #f59e0b;
+        background: rgba(245, 158, 11, 0.1);
+    }
+
+    .badge-danger {
+        color: #ef4444;
+        border: 1px solid #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(5, 10, 20, 0.95);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(10px);
+        padding: 15px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 50;
+        font-family: 'Share Tech Mono', monospace;
+    }
+
+    .bottom-stat {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+
+    .bottom-stat strong {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.2rem;
+        display: block;
+        margin-top: 2px;
+    }
+
+    /* Gauge styling */
+    .gauge-container {
+        position: relative;
+        width: 120px;
+        height: 60px;
+        overflow: hidden;
+        margin: 0 auto;
+    }
+
+    .gauge-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: -60px;
+        border-radius: 50%;
+        background: conic-gradient(from 270deg, #22c55e 0deg, #22c55e 60deg, #f59e0b 60deg, #f59e0b 120deg, #ef4444 120deg, #ef4444 180deg, transparent 180deg);
+    }
+
+    .gauge-inner {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        right: 15px;
+        bottom: -45px;
+        background: #0d1b2a;
+        border-radius: 50%;
+        border-bottom: none;
+    }
+
+    .gauge-needle {
+        position: absolute;
+        bottom: 0px;
+        left: 50%;
+        width: 2px;
+        height: 50px;
+        background: #fff;
+        transform-origin: bottom center;
+        transform: rotate(-90deg);
+        /* -90 to 90 */
+        transition: transform 0.3s ease;
+    }
+
+    .gauge-needle::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: -4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #00c8f0;
+    }
+</style>
+
+<!-- Main Container -->
+<div class="fade-up" style="padding-bottom: 100px; padding-top: 15px;">
+
+    <!-- Hud Header -->
+    <div class="hud-header">
+        <div class="header-stats">
+            <div>
+                VOYAGE ID
+                <div class="header-stat-value">#{{ trip.id if trip else '—' }}</div>
+            </div>
+            <div>
+                STARTED
+                <div class="header-stat-value">{{ trip.start_time.strftime('%H:%M:%S') if trip and trip.start_time else
+                    '—' }}</div>
+            </div>
+            <div>
+                DURATION
+                <div class="header-stat-value" id="duration-timer">00:00:00</div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="/auth/logout"
+                style="color:var(--text-muted); text-decoration:none; font-size:0.8rem; border:1px solid rgba(255,255,255,0.2); padding:4px 12px; border-radius:4px; transition:all 0.2s;">Logout</a>
+            <div class="system-active">
+                <span class="dot"></span> SYSTEM ACTIVE
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 pt-2">
+        <!-- Left Column: Feed & Trends -->
+        <div class="col-lg-8">
+            <!-- Video Container -->
+            <div class="video-container mb-3"
+                style="min-height: 480px; display:flex; align-items:center; justify-content:center;">
+                <div class="video-bracket vb-tl"></div>
+                <div class="video-bracket vb-tr"></div>
+                <div class="video-bracket vb-bl"></div>
+                <div class="video-bracket vb-br"></div>
+                <div class="rec-badge"><span class="dot"
+                        style="background:#ef4444;width:6px;height:6px;border-radius:50%;display:inline-block;animation:pulse 1.5s infinite;"></span>
+                    REC</div>
+
+                <img src="/video/feed" id="live-feed" alt="Live feed" style="width:100%; height:auto; display:block;"
+                    onerror="this.style.display='none'; document.getElementById('feed-error').style.display='flex';">
+                <div id="feed-error"
+                    style="display:none; flex-direction:column; align-items:center; color:var(--text-muted);">
+                    <div style="font-size:2rem; margin-bottom:1rem;">📷</div>
+                    No Camera Connected<br><small>Connect a camera and restart</small>
+                </div>
+            </div>
+
+            <!-- Risk Trend -->
+            <div class="glass-panel" style="display:flex; gap:2rem; align-items:center;">
+                <div
+                    style="text-align:center; min-width: 160px; border-right: 1px solid rgba(255,255,255,0.1); padding-right:1.5rem;">
+                    <!-- Gauge -->
+                    <div class="gauge-container">
+                        <div class="gauge-bg"></div>
+                        <div class="gauge-inner"></div>
+                        <div class="gauge-needle" id="gauge-needle"></div>
+                    </div>
+                    <div id="gauge-status-text"
+                        style="color:#22c55e; font-weight:bold; margin-top:8px; font-family:'Inter', sans-serif;">LOW
+                    </div>
+                    <div
+                        style="font-family:'Share Tech Mono', monospace; font-size:0.6rem; color:var(--text-muted); letter-spacing:0.05em; margin-bottom:15px;">
+                        CROWD LEVEL</div>
+
+                    <div
+                        style="font-family:'Share Tech Mono', monospace; font-size:0.6rem; color:var(--text-muted); letter-spacing:0.05em;">
+                        LIFE-JACKET COMPLIANCE</div>
+                    <div id="compliance-pct"
+                        style="color:#00c8f0; font-weight:bold; font-size:1.15rem; font-family:'Inter', sans-serif;">
+                        100%</div>
+                </div>
+                <div style="flex-grow:1; padding-top:10px;">
+                    <div
+                        style="font-family:'Share Tech Mono', monospace; font-size:0.7rem; color:var(--text-muted); letter-spacing:0.05em; margin-bottom:5px;">
+                        RISK TREND <span style="opacity:0.5;">(LAST 30 SEC)</span></div>
+                    <canvas id="trendChart" style="width:100%; height:80px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Stats -->
+        <div class="col-lg-4">
+
+            <!-- Passengers -->
+            <div class="glass-panel mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span
+                        style="font-family:'Share Tech Mono', monospace; font-size:0.75rem; color:var(--text-muted); letter-spacing:0.1em;">PASSENGERS</span>
+                    <span class="badge" style="background:rgba(255,255,255,0.1); color:#ccc;">MAX {{ user.boat_max_pax
+                        if user.boat_max_pax else 5 }}</span>
+                </div>
+                <div class="passengers-big" id="pax-count">0</div>
+                <div class="progress-bar-custom">
+                    <div class="progress-fill" id="pax-bar" style="width: 0%;"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2" style="font-size:0.75rem; color:var(--text-muted);">
+                    <span>0</span><span>Capacity Limit</span>
+                </div>
+            </div>
+
+            <!-- Protocols -->
+            <div class="glass-panel">
+                <div
+                    style="font-family:'Share Tech Mono', monospace; font-size:0.75rem; color:var(--text-muted); letter-spacing:0.1em; margin-bottom:15px;">
+                    SAFETY PROTOCOLS</div>
+
+                <div class="protocol-item">
+                    <div class="d-flex align-items-center gap-3">
+                        <span style="font-size:1.1rem;">👥</span> <span
+                            style="font-size:0.85rem; font-weight:600; color:#fff;">Crowd Density</span>
+                    </div>
+                    <div class="badge-custom badge-normal" id="proto-crowd">NORMAL</div>
+                </div>
+
+                <div class="protocol-item">
+                    <div class="d-flex align-items-center gap-3">
+                        <span style="font-size:1.1rem;">🦺</span> <span
+                            style="font-size:0.85rem; font-weight:600; color:#fff;">Life Jackets</span>
+                    </div>
+                    <div class="badge-custom badge-warning" id="proto-jacket" style="display:block;">CHECK REQ</div>
+                </div>
+
+                <div class="protocol-item">
+                    <div class="d-flex align-items-center gap-3">
+                        <span style="font-size:1.1rem;">🌊</span> <span
+                            style="font-size:0.85rem; font-weight:600; color:#fff;">Out of Bounds</span>
+                    </div>
+                    <div class="badge-custom badge-danger" id="proto-bounds" style="display:block;">0 VIOLATION(S)</div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Fixed Bottom Bar -->
+<div class="bottom-bar">
+    <div style="display:flex; gap:60px;">
+        <div class="bottom-stat">
+            ALERTS TRIGGERED
+            <strong id="bottom-alerts" style="color:#fff;">0</strong>
+        </div>
+        <div class="bottom-stat">
+            OVERALL STATUS
+            <strong id="bottom-status" style="color:#22c55e;">SAFE</strong>
+        </div>
+    </div>
+    <button id="end-voyage-btn"
+        style="background:rgba(0,0,0,0.5); border:1px solid #ef4444; color:#ef4444; padding:10px 24px; border-radius:4px; font-weight:bold; letter-spacing:0.05em; transition:all 0.2s; cursor:pointer;"
+        onclick="endVoyage()">
+        <span style="display:inline-block; width:8px; height:8px; background:#ef4444; margin-right:6px;"></span> END
+        VOYAGE
+    </button>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Constants
+    const maxPax = parseInt("{{ user.boat_max_pax if user.boat_max_pax else 5 }}", 10);
+
+    // Canvas trend chart init
+    const trendCanvas = document.getElementById('trendChart');
+    const trendCtx = trendCanvas.getContext('2d');
+
+    // Resize function
+    function resizeCanvas() {
+        trendCanvas.width = trendCanvas.parentElement.clientWidth;
+        trendCanvas.height = 80;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const historyPoints = Array(20).fill(0);
+
+    // Draw trend chart
+    function drawTrend() {
+        const w = trendCanvas.width;
+        const h = trendCanvas.height;
+        trendCtx.clearRect(0, 0, w, h);
+
+        // Dotted baseline
+        trendCtx.beginPath();
+        trendCtx.setLineDash([2, 4]);
+        trendCtx.moveTo(0, h - 8);
+        trendCtx.lineTo(w, h - 8);
+        trendCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+        trendCtx.stroke();
+        trendCtx.setLineDash([]);
+
+        if (historyPoints.length < 2) return;
+
+        const step = w / (historyPoints.length - 1);
+        
+        // Draw segment by segment with individual colors
+        trendCtx.lineWidth = 2;
+        for (let i = 0; i < historyPoints.length - 1; i++) {
+            trendCtx.beginPath();
+            const val1 = historyPoints[i];
+            const px1 = i * step;
+            const py1 = h - 8 - (val1 / 100) * (h - 16);
+            trendCtx.moveTo(px1, py1);
+
+            const val2 = historyPoints[i+1];
+            const px2 = (i + 1) * step;
+            const py2 = h - 8 - (val2 / 100) * (h - 16);
+            trendCtx.lineTo(px2, py2);
+
+            if (val2 >= 66) trendCtx.strokeStyle = '#ef4444';      // Red for high risk
+            else if (val2 >= 33) trendCtx.strokeStyle = '#f59e0b'; // Yellow for moderate
+            else trendCtx.strokeStyle = '#22c55e';                 // Green for low
+            
+            trendCtx.stroke();
+        }
+
+        // Dots
+        for (let i = 0; i < historyPoints.length; i++) {
+            const val = historyPoints[i];
+            const px = i * step;
+            const py = h - 8 - (val / 100) * (h - 16);
+            trendCtx.beginPath();
+            trendCtx.arc(px, py, 1.5, 0, Math.PI * 2);
+            if (val >= 66) trendCtx.fillStyle = '#ef4444';
+            else if (val >= 33) trendCtx.fillStyle = '#f59e0b';
+            else trendCtx.fillStyle = '#22c55e';
+            trendCtx.fill();
+        }
+    }
+
+    // Timer logic
+    let tripStart = null;
+    {% if trip and trip.start_time %}
+    tripStart = new Date("{{ trip.start_time.isoformat() }}Z").getTime();
+    {% endif %}
+
+    function updateTimer() {
+        if (!tripStart) return;
+        const now = new Date().getTime();
+        let diff = Math.floor((now - tripStart) / 1000);
+        if (diff < 0) diff = 0;
+        const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+        const secs = String(diff % 60).padStart(2, '0');
+        document.getElementById('duration-timer').textContent = `${hrs}:${mins}:${secs}`;
+    }
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    // Refresh UI with live data
+    async function refreshStatus() {
+        try {
+            const d = await fetch('/video/status').then(r => r.json());
+
+            // Passengers
+            const count = d.people_count || 0;
+            document.getElementById('pax-count').textContent = count;
+
+            let paxPct = (count / maxPax) * 100;
+            if (paxPct > 100) paxPct = 100;
+            const bar = document.getElementById('pax-bar');
+            bar.style.width = paxPct + '%';
+            if (paxPct > 90 || d.overcrowded) bar.style.background = '#ef4444';
+            else bar.style.background = '#3b82f6';
+
+            // Alerts / Protocols
+            let alertCount = 0;
+
+            // Crowd
+            const pCrowd = document.getElementById('proto-crowd');
+            if (d.overcrowded || count > maxPax) {
+                pCrowd.textContent = 'OVERCROWDED';
+                pCrowd.className = 'badge-custom badge-danger';
+                alertCount++;
+            } else {
+                pCrowd.textContent = 'NORMAL';
+                pCrowd.className = 'badge-custom badge-normal';
+            }
+
+            // Life Jacket
+            const pJacket = document.getElementById('proto-jacket');
+            const pctElem = document.getElementById('compliance-pct');
+            const totalDetected = (d.life_jacket_worn || 0) + (d.life_jacket_not_worn || 0);
+
+            if (totalDetected > 0) {
+                let pct = Math.round((d.life_jacket_worn / totalDetected) * 100);
+                pctElem.textContent = pct + '%';
+                
+                if (d.life_jacket_not_worn > 0) {
+                    pJacket.textContent = `${d.life_jacket_worn} WORN, ${d.life_jacket_not_worn} NOT WORN`;
+                    pJacket.className = 'badge-custom badge-warning';
+                    pctElem.style.color = '#f59e0b';
+                    alertCount++;
+                } else {
+                    pJacket.textContent = 'ALL OK';
+                    pJacket.className = 'badge-custom badge-normal';
+                    pctElem.style.color = '#00c8f0';
+                }
+            } else {
+                pJacket.textContent = 'ALL OK';
+                pJacket.className = 'badge-custom badge-normal';
+                pctElem.textContent = '100%';
+                pctElem.style.color = '#00c8f0';
+            }
+
+            // Bounds
+            const pBounds = document.getElementById('proto-bounds');
+            if (d.out_of_bounds_count > 0) {
+                pBounds.textContent = `${d.out_of_bounds_count} out of boat`;
+                pBounds.className = 'badge-custom badge-danger';
+                alertCount++;
+            } else {
+                pBounds.textContent = '0 out of boat';
+                pBounds.className = 'badge-custom badge-normal';
+            }
+
+            // Overall
+            document.getElementById('bottom-alerts').textContent = alertCount;
+            const bStatus = document.getElementById('bottom-status');
+            const needle = document.getElementById('gauge-needle');
+            const gText = document.getElementById('gauge-status-text');
+
+            let riskScore = (count / maxPax) * 30; // 0 to 30 base score
+            if (d.overcrowded || count > maxPax) riskScore += 30;
+            if (!d.life_jacket_ok) riskScore += 30;
+            if (d.stepped_out) riskScore += 30;
+            if (riskScore > 100) riskScore = 100;
+
+            // map score to -90 to +90 degrees
+            const angle = -90 + (riskScore / 100) * 180;
+            needle.style.transform = `rotate(${angle}deg)`;
+
+            if (d.safety_level === 'Unsafe') {
+                bStatus.textContent = 'CRITICAL';
+                bStatus.style.color = '#ef4444';
+                gText.textContent = 'HIGH';
+                gText.style.color = '#ef4444';
+            } else if (d.safety_level === 'Caution') {
+                bStatus.textContent = 'WARNING';
+                bStatus.style.color = '#f59e0b';
+                gText.textContent = 'MEDIUM';
+                gText.style.color = '#f59e0b';
+            } else {
+                bStatus.textContent = 'SAFE';
+                bStatus.style.color = '#22c55e';
+                gText.textContent = 'LOW';
+                gText.style.color = '#22c55e';
+            }
+
+            // Update history
+            historyPoints.shift();
+            historyPoints.push(riskScore);
+            drawTrend();
+
+        } catch (e) { console.error(e); }
+    }
+
+    // Initial draw
+    drawTrend();
+    refreshStatus();
+    setInterval(refreshStatus, 2000);
+
+    async function endVoyage() {
+        if (confirm("End this voyage?")) {
+            const btn = document.getElementById("end-voyage-btn");
+            btn.innerHTML = "ENDING...";
+            const res = await fetch('/voyage/end_current', { method: 'POST' });
+            if (res.ok) {
+                window.location.href = '/pre_voyage';
+            } else {
+                btn.innerHTML = "END VOYAGE ERROR";
+            }
+        }
+    }
+</script>
+{% endblock %}
