@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Voyage #{{ trip.id }} — BoatSafetyAI{% endblock %}
+
+{% block content %}
+<!-- Top bar -->
+<div class="d-flex align-items-center gap-3 mb-4 fade-up">
+    <a href="/admin" style="color:var(--text-muted); font-size:1.3rem; text-decoration:none;">←</a>
+    <div>
+        <div style="font-size:.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.1em;">Voyage
+            Detail</div>
+        <h4 class="fw-bold mb-0">Voyage #{{ trip.id }}</h4>
+    </div>
+</div>
+
+<!-- Summary cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3 fade-up fade-up-d1">
+        <div class="stat-card">
+            <div class="stat-val" style="font-size:1.3rem;">{{ trip.driver.username if trip.driver else '—' }}</div>
+            <div class="stat-label">Driver</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-d1">
+        <div class="stat-card">
+            <div class="stat-val" style="font-size:1.3rem;">{{ trip.driver.boat_number if trip.driver else '—' }}</div>
+            <div class="stat-label">Boat Number</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-d2">
+        <div class="stat-card">
+            <div class="stat-val">{{ trip.max_passenger_count or 0 }}</div>
+            <div class="stat-label">Max Passengers</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-d2">
+        <div class="stat-card">
+            <div class="stat-val">{{ trip.alert_count or 0 }}</div>
+            <div class="stat-label">Alerts Triggered</div>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline & classification -->
+<div class="row g-4 mb-4">
+    <!-- Timeline card -->
+    <div class="col-md-5 fade-up fade-up-d2">
+        <div class="glass p-4 h-100">
+            <h6 class="fw-bold mb-3"
+                style="color:var(--text-muted); text-transform:uppercase; font-size:.8rem; letter-spacing:.08em;">🕐
+                Voyage Timeline</h6>
+            <div class="d-flex flex-column gap-3">
+                <div>
+                    <div style="font-size:.78rem; color:var(--text-muted);">Date</div>
+                    <div class="fw-semibold">{{ trip.start_time.strftime('%A, %d %B %Y') if trip.start_time else '—' }}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:.78rem; color:var(--text-muted);">Start Time</div>
+                    <div class="fw-semibold">{{ trip.start_time.strftime('%H:%M:%S') if trip.start_time else '—' }}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:.78rem; color:var(--text-muted);">End Time</div>
+                    <div class="fw-semibold">
+                        {% if trip.end_time %}{{ trip.end_time.strftime('%H:%M:%S') }}
+                        {% else %}<span class="badge" style="background:rgba(34,197,94,.15);color:#86efac;">● Still
+                            Active</span>{% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:.78rem; color:var(--text-muted);">Duration</div>
+                    <div class="fw-semibold">{{ duration or '—' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final classification -->
+    <div class="col-md-7 fade-up fade-up-d3">
+        <div class="glass p-4 h-100">
+            <h6 class="fw-bold mb-3"
+                style="color:var(--text-muted); text-transform:uppercase; font-size:.8rem; letter-spacing:.08em;">🏁
+                Final Classification</h6>
+            {% set s = trip.safety_status %}
+            {% set color = '#22c55e' if s == 'Safe' else ('#f59e0b' if s == 'Caution' else '#ef4444') %}
+            {% set bg = 'rgba(34,197,94,.1)' if s == 'Safe' else ('rgba(245,158,11,.1)' if s == 'Caution' else
+            'rgba(239,68,68,.1)') %}
+            <div class="text-center py-3"
+                style="border-radius:1rem; background:{{ bg }}; border:1px solid {{ color }}30;">
+                <div style="font-size:3.5rem;">
+                    {{ '✅' if s == 'Safe' else ('⚠️' if s == 'Caution' else '🚨') }}
+                </div>
+                <div style="font-size:1.8rem; font-weight:800; color:{{ color }};">{{ s }}</div>
+                <div style="font-size:.85rem; color:var(--text-muted);" class="mt-1">ML Safety Classification</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Safety log timeline -->
+<div class="glass fade-up fade-up-d3">
+    <div class="section-head">📜 Safety Log ({{ logs | length }} entries)</div>
+    {% if logs %}
+    <div style="overflow-x:auto;">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Time</th>
+                    <th>Prediction</th>
+                    <th>Passengers</th>
+                    <th class="pe-4">Violations</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="ps-4" style="color:var(--text-muted); font-size:.85rem;">
+                        {{ log.timestamp.strftime('%H:%M:%S') if log.timestamp else '—' }}
+                    </td>
+                    <td>
+                        {% if log.prediction == 'Safe' %}
+                        <span class="badge" style="background:rgba(34,197,94,.15);color:#86efac;">Safe</span>
+                        {% elif log.prediction == 'Caution' %}
+                        <span class="badge" style="background:rgba(245,158,11,.15);color:#fcd34d;">Caution</span>
+                        {% else %}
+                        <span class="badge" style="background:rgba(239,68,68,.15);color:#fca5a5;">Unsafe</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-semibold">{{ log.passenger_count or 0 }}</td>
+                    <td class="pe-4" style="font-size:.85rem; color:var(--text-muted);">
+                        {{ log.violations or 'None' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5" style="color:var(--text-muted);">No safety log entries for this voyage.</div>
+    {% endif %}
+</div>
+{% endblock %}

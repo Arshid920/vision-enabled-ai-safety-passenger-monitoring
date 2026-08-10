@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+{% block title %}System Monitoring — BoatSafetyAI{% endblock %}
+
+{% block content %}
+<!-- Top bar -->
+<div class="d-flex align-items-center justify-content-between mb-4 fade-up">
+    <div>
+        <div
+            style="font-size:.75rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:.2rem;">
+            System Monitoring Dashboard</div>
+        <h4 class="fw-bold mb-0">👨‍✈️ Admin Overview</h4>
+        <small style="color:var(--text-muted);"><span class="pulse me-1"></span>Logged in as <strong
+                style="color:var(--text-primary);">{{ user.username }}</strong></small>
+    </div>
+    <a href="/auth/logout" class="btn btn-outline-danger btn-sm px-3">Logout</a>
+</div>
+
+<!-- ── System Overview Stats ──────────────────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3 fade-up fade-up-d1">
+        <div class="stat-card">
+            <div class="stat-val text-primary">{{ total_drivers }}</div>
+            <div class="stat-label">Total Drivers</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-d2">
+        <div class="stat-card">
+            <div class="stat-val" style="color:#06b6d4;">{{ total_voyages }}</div>
+            <div class="stat-label">Total Voyages</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-d3">
+        <div class="stat-card">
+            <div class="stat-val" style="color:#22c55e;">{{ active_voyages }}</div>
+            <div class="stat-label">Active Voyages</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 fade-up fade-up-d4">
+        <div class="stat-card">
+            <div class="stat-val" style="color:#ef4444;">{{ unsafe_voyages }}</div>
+            <div class="stat-label">Unsafe Voyages</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── All Voyage Records ─────────────────────────────────────── -->
+<div class="glass mb-4 fade-up fade-up-d2">
+    <div class="section-head d-flex align-items-center justify-content-between">
+        <span>📋 All Voyage Records</span>
+        <span style="font-size:.75rem; color:var(--text-muted);">Click a row to view details</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="table table-dark table-hover mb-0"
+            style="background:transparent; --bs-table-bg: transparent; --bs-table-hover-bg: rgba(255,255,255,0.05);"
+            id="voyages-table">
+            <thead style="background: rgba(0,0,0,0.4); border-bottom: 2px solid rgba(255,255,255,0.1);">
+                <tr>
+                    <th class="ps-4" style="color:var(--text-muted); font-weight:600;">ID</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Driver</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Boat</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Date</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Start</th>
+                    <th style="color:var(--text-muted); font-weight:600;">End</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Max Pax</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Alerts</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Status</th>
+                    <th class="pe-4 text-end" style="color:var(--text-muted); font-weight:600;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trip in trips %}
+                <tr class="voyage-row" data-trip="{{ trip.id }}" style="cursor:pointer;"
+                    title="Click to view voyage details">
+                    <td class="ps-4" style="color:var(--text-muted);">#{{ trip.id }}</td>
+                    <td class="fw-semibold">{{ trip.driver.username if trip.driver else '—' }}</td>
+                    <td>
+                        <span class="badge" style="background:rgba(59,130,246,.18);color:#93c5fd;">
+                            {{ trip.driver.boat_number if trip.driver else '—' }}
+                        </span>
+                    </td>
+                    <td style="color:var(--text-muted);">{{ trip.start_time.strftime('%d %b %Y') if trip.start_time else
+                        '—' }}</td>
+                    <td>{{ trip.start_time.strftime('%H:%M') if trip.start_time else '—' }}</td>
+                    <td>
+                        {% if trip.end_time %}
+                        {{ trip.end_time.strftime('%H:%M') }}
+                        {% else %}
+                        <span class="badge" style="background:rgba(34,197,94,.15);color:#86efac;">● Live</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-semibold">{{ trip.max_passenger_count or '—' }}</td>
+                    <td>
+                        {% if trip.alert_count %}
+                        <span class="badge" style="background:rgba(239,68,68,.15);color:#fca5a5;">{{ trip.alert_count
+                            }}</span>
+                        {% else %}
+                        <span style="color:var(--text-muted);">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4">
+                        {% if trip.safety_status == 'Safe' %}
+                        <span class="badge" style="background:rgba(34,197,94,.15);color:#86efac;">Safe</span>
+                        {% elif trip.safety_status == 'Caution' %}
+                        <span class="badge" style="background:rgba(245,158,11,.15);color:#fcd34d;">Caution</span>
+                        {% else %}
+                        <span class="badge" style="background:rgba(239,68,68,.15);color:#fca5a5;">Unsafe</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-end">
+                        {% if not trip.end_time %}
+                        <button class="btn btn-sm px-2 py-1 end-voyage-btn" data-trip="{{ trip.id }}"
+                            style="border-radius:.3rem; font-size:.75rem; font-weight:600; border:1px solid #ef4444; color:#ef4444; background:transparent;">Cancel/End</button>
+                        {% else %}
+                        <span style="color:var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center py-5" style="color:var(--text-muted);">
+                        No voyage records yet. Voyages appear here once drivers log trips.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── Blocked Unsafe Voyages ────────────────────────────────────── -->
+<div class="glass mb-4 fade-up fade-up-d3" style="border: 1px solid rgba(239, 68, 68, 0.3);">
+    <div class="section-head d-flex align-items-center justify-content-between mb-3">
+        <span style="color:#fca5a5;">🚫 Unsafe Voyages & Blocked Attempts</span>
+        <span style="font-size:.75rem; color:var(--text-muted);">Click a row to view details</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="table table-dark table-hover mb-0"
+            style="background:transparent; --bs-table-bg: transparent; --bs-table-hover-bg: rgba(255,255,255,0.05);">
+            <thead style="background: rgba(239,68,68,0.1); border-bottom: 2px solid rgba(239,68,68,0.3);">
+                <tr>
+                    <th class="ps-4" style="color:var(--text-muted); font-weight:600;">ID</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Driver</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Boat</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Date</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Start</th>
+                    <th style="color:var(--text-muted); font-weight:600;">End</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Max Pax</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Alerts</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Status</th>
+                    <th class="pe-4 text-end" style="color:var(--text-muted); font-weight:600;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trip in unsafe_trips %}
+                <tr class="voyage-row" data-trip="{{ trip.id }}" style="cursor:pointer;"
+                    title="Click to view voyage details">
+                    <td class="ps-4" style="color:var(--text-muted);">#{{ trip.id }}</td>
+                    <td class="fw-semibold">{{ trip.driver.username if trip.driver else '—' }}</td>
+                    <td>
+                        <span class="badge" style="background:rgba(59,130,246,.18);color:#93c5fd;">
+                            {{ trip.driver.boat_number if trip.driver else '—' }}
+                        </span>
+                    </td>
+                    <td style="color:var(--text-muted);">
+                        {{ trip.start_time.strftime('%d %b %Y') if trip.start_time else '—' }}
+                    </td>
+                    <td>{{ trip.start_time.strftime('%H:%M') if trip.start_time else '—' }}</td>
+                    <td>
+                        {% if trip.alert_count == -1 %}
+                        <span style="color:var(--text-muted);">Blocked</span>
+                        {% elif trip.end_time %}
+                        {{ trip.end_time.strftime('%H:%M') }}
+                        {% else %}
+                        <span class="badge" style="background:rgba(239,68,68,.15);color:#fca5a5;">● Live</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-semibold">{{ trip.max_passenger_count if trip.alert_count != -1 else '—' }}</td>
+                    <td>
+                        {% if trip.alert_count > 0 %}
+                        <span class="badge" style="background:rgba(239,68,68,.15);color:#fca5a5;">{{ trip.alert_count
+                            }}</span>
+                        {% elif trip.alert_count == 0 %}
+                        <span style="color:var(--text-muted);">0</span>
+                        {% else %}
+                        <span style="color:var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4">
+                        {% if trip.alert_count == -1 %}
+                        <span class="badge" style="background:rgba(239,68,68,.15);color:#fca5a5;">Blocked by ML</span>
+                        {% else %}
+                        <span class="badge" style="background:rgba(239,68,68,.15);color:#fca5a5;">Unsafe</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-end">
+                        {% if not trip.end_time and trip.alert_count != -1 %}
+                        <button class="btn btn-sm px-2 py-1 end-voyage-btn" data-trip="{{ trip.id }}"
+                            style="border-radius:.3rem; font-size:.75rem; font-weight:600; border:1px solid #ef4444; color:#ef4444; background:transparent;">Cancel/End</button>
+                        {% else %}
+                        <span style="color:var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center py-4" style="color:var(--text-muted);">
+                        No unsafe voyages or blocked attempts.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<hr style="border-color: rgba(255,255,255,0.1); margin: 3rem 0;" class="fade-up fade-up-d3">
+
+<!-- ── Driver Management ──────────────────────────────────────── -->
+<div class="glass fade-up fade-up-d4" style="margin-bottom: 3rem;">
+    <div class="section-head mb-3">👤 Driver Management Archive</div>
+    <div style="overflow-x:auto;">
+        <table class="table table-dark table-hover mb-0"
+            style="background:transparent; --bs-table-bg: transparent; --bs-table-hover-bg: rgba(255,255,255,0.05);">
+            <thead style="background: rgba(0,0,0,0.4); border-bottom: 2px solid rgba(255,255,255,0.1);">
+                <tr>
+                    <th class="ps-4" style="color:var(--text-muted); font-weight:600;">#</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Username</th>
+                    <th style="color:var(--text-muted); font-weight:600;">License No.</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Boat ID</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Voyages</th>
+                    <th style="color:var(--text-muted); font-weight:600;">Status</th>
+                    <th class="pe-4" style="color:var(--text-muted); font-weight:600;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for driver in drivers %}
+                <tr id="driver-row-{{ driver.id }}">
+                    <td class="ps-4" style="color:var(--text-muted);">{{ driver.id }}</td>
+                    <td class="fw-semibold">{{ driver.username }}</td>
+                    <td><code>{{ driver.license_number or '—' }}</code></td>
+                    <td>
+                        <span class="badge" style="background:rgba(59,130,246,.18);color:#93c5fd;">
+                            {{ driver.boat_number or '—' }}
+                        </span>
+                    </td>
+                    <td style="color:var(--text-muted);">{{ driver.trips | length }}</td>
+                    <td>
+                        {% if driver.is_active %}
+                        <span class="badge" style="background:rgba(34,197,94,.15);color:#86efac;"
+                            id="status-badge-{{ driver.id }}">Active</span>
+                        {% else %}
+                        <span class="badge" style="background:rgba(239,68,68,.15);color:#fca5a5;"
+                            id="status-badge-{{ driver.id }}">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4">
+                        <button class="btn btn-sm px-3 py-1 toggle-btn" data-driver="{{ driver.id }}"
+                            data-active="{{ driver.is_active }}"
+                            style="border-radius:.5rem; font-size:.78rem; font-weight:600;
+                                       {% if driver.is_active %}border:1.5px solid #ef4444;color:#ef4444;background:transparent;
+                                       {% else %}border:1.5px solid #22c55e;color:#22c55e;background:transparent;{% endif %}">
+                            {{ 'Deactivate' if driver.is_active else 'Activate' }}
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-5" style="color:var(--text-muted);">No drivers registered yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Row click → voyage detail
+    document.querySelectorAll('.voyage-row').forEach(row => {
+        row.addEventListener('click', () => {
+            window.location.href = '/admin/voyage/' + row.dataset.trip;
+        });
+        row.addEventListener('mouseenter', () => row.style.background = 'rgba(59,130,246,0.06)');
+        row.addEventListener('mouseleave', () => row.style.background = '');
+    });
+
+    // End Voyage action from admin dashboard table
+    document.querySelectorAll('.end-voyage-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation(); // prevent clicking the row entirely
+            if (confirm("Are you sure you want to end this live voyage from the system?")) {
+                const id = btn.dataset.trip;
+                const res = await fetch(`/admin/voyage/${id}/end`, { method: 'POST' });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Error ending voyage.');
+                }
+            }
+        });
+    });
+
+    // Driver activate/deactivate toggle
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.driver;
+            const res = await fetch(`/admin/driver/${id}/toggle`, { method: 'POST' });
+            if (!res.ok) return;
+            const d = await res.json();
+
+            const badge = document.getElementById('status-badge-' + id);
+            if (d.is_active) {
+                badge.textContent = 'Active';
+                badge.style.cssText = 'background:rgba(34,197,94,.15);color:#86efac;';
+                btn.textContent = 'Deactivate';
+                btn.style.cssText = 'border-radius:.5rem;font-size:.78rem;font-weight:600;border:1.5px solid #ef4444;color:#ef4444;background:transparent;';
+            } else {
+                badge.textContent = 'Inactive';
+                badge.style.cssText = 'background:rgba(239,68,68,.15);color:#fca5a5;';
+                btn.textContent = 'Activate';
+                btn.style.cssText = 'border-radius:.5rem;font-size:.78rem;font-weight:600;border:1.5px solid #22c55e;color:#22c55e;background:transparent;';
+            }
+        });
+    });
+</script>
+{% endblock %}
